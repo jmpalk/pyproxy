@@ -5,6 +5,7 @@ import socket
 import binascii
 import random
 import select
+import argparse
 
 
 
@@ -282,6 +283,12 @@ def handle_initial_request(client_socket):
 	proxy_handler.start()
 
 
+def valid_ip(address):
+    try:
+        socket.inet_aton(address)
+        return True
+    except:
+        return False
 
 
 
@@ -301,6 +308,35 @@ def main():
 	silent = False
 	global debug
 	debug = False
+
+	parser = argparse.ArgumentParser(description='Start a simple SOCKS5 proxy')
+	parser.add_argument('-a', '--allowed_ip', help="IP address allowed to connect to the proxy. Defaults to 127.0.0.1")
+	parser.add_argument('-p', '--port', type=int, help="Port to listen on")
+	parser.add_argument('-b', '--bind_ip', help="Listening IP address. Defaults to 0.0.0.0 (all interfaces).")
+
+	args = parser.parse_args()
+
+	if args.allowed_ip:
+		if valid_ip(args.allowed_ip):
+			allowed_src_ip = args.allowed_ip
+		else:
+			print("Invalid allowed IP address")
+			exit(-1)
+
+	if args.port:
+		if args.port > 0 and args.port < 65355:
+			bind_port = args.port
+		else:
+			print("Invalid port")
+			exit(-1)
+	
+	if args.bind_ip:
+		if valid_ip(args.bind_ip):
+			bind_ip = args.bind_ip
+		else:
+			print("Invalid bind IP address")
+			exit(-1)
+
 
 	#initialize the server
 	server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
